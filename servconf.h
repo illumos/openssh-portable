@@ -80,6 +80,9 @@ struct per_source_penalty {
 	int	penalty_max;
 	int	penalty_min;
 };
+#ifdef PAM_ENHANCEMENT
+#define _SSH_PAM_SERVICE_PREFIX "sshd"
+#endif
 
 typedef struct {
 	u_int	num_ports;
@@ -235,6 +238,12 @@ typedef struct {
 
 	u_int	num_auth_methods;
 	char   **auth_methods;
+
+#ifdef PAM_ENHANCEMENT
+	char   *pam_service_prefix;
+	/* char   *pam_service_name; */ /* Now in upstream! */
+	int	pam_service_per_authmethod;
+#endif
 
 	int	fingerprint_hash;
 	int	expose_userauth_info;
