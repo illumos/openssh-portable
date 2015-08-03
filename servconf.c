@@ -295,7 +295,12 @@ fill_default_server_options(ServerOptions *options)
 
 	/* Portable-specific options */
 	if (options->use_pam == -1)
+#ifdef SET_USE_PAM
+		/* use_pam should be always set to 1 on Solaris */
+		options->use_pam = 1;
+#else
 		options->use_pam = 0;
+#endif
 	if (options->pam_service_name == NULL)
 		options->pam_service_name = xstrdup(SSHD_PAM_SERVICE);
 
@@ -1325,8 +1330,17 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 	switch (opcode) {
 	/* Portable-specific options */
 	case sUsePAM:
+#ifdef SET_USE_PAM
+		/* UsePAM is always on and not configurable on Solaris */
+		logit("%s line %d: ignoring UsePAM option value."
+		    " This option is always on.", filename, linenum);
+		while (arg)
+			arg = strdelim(&str);
+		break;
+#else
 		intptr = &options->use_pam;
 		goto parse_flag;
+#endif
 	case sPAMServiceName:
 		charptr = &options->pam_service_name;
 		arg = argv_next(&ac, &av);
