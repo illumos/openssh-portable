@@ -2722,7 +2722,11 @@ fill_default_options(Options * options)
 	if (options->forward_x11 == -1)
 		options->forward_x11 = 0;
 	if (options->forward_x11_trusted == -1)
+#ifdef OPTION_DEFAULT_VALUE
+		options->forward_x11_trusted = 1;
+#else
 		options->forward_x11_trusted = 0;
+#endif
 	if (options->forward_x11_timeout == -1)
 		options->forward_x11_timeout = 1200;
 	/*
@@ -2749,7 +2753,11 @@ fill_default_options(Options * options)
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = SSH_PUBKEY_AUTH_ALL;
 	if (options->gss_authentication == -1)
+#ifdef OPTION_DEFAULT_VALUE
+		options->gss_authentication = 1;
+#else
 		options->gss_authentication = 0;
+#endif
 	if (options->gss_deleg_creds == -1)
 		options->gss_deleg_creds = 0;
 	if (options->password_authentication == -1)
