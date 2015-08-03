@@ -242,6 +242,7 @@ typedef struct {
 
 	int	fingerprint_hash;
 	int	expose_userauth_info;
+	char	*pubkey_plugin;
 	u_int64_t timing_secret;
 	char   *sk_provider;
 	int	required_rsa_size;	/* minimum size of RSA keys */
