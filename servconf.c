@@ -224,6 +224,7 @@ initialize_server_options(ServerOptions *options)
 	options->num_channel_timeouts = 0;
 	options->unused_connection_timeout = -1;
 	options->sshd_session_path = NULL;
+	options->pubkey_plugin = NULL;
 }
 
 /* Returns 1 if a string option is unset or set to "none" or 0 otherwise. */
@@ -589,6 +590,7 @@ typedef enum {
 	sRevokedKeys, sTrustedUserCAKeys, sAuthorizedPrincipalsFile,
 	sAuthorizedPrincipalsCommand, sAuthorizedPrincipalsCommandUser,
 	sKexAlgorithms, sCASignatureAlgorithms, sIPQoS, sVersionAddendum,
+	sPubKeyPlugin,
 	sAuthorizedKeysCommand, sAuthorizedKeysCommandUser,
 	sAuthenticationMethods, sHostKeyAgent, sPermitUserRC,
 	sStreamLocalBindMask, sStreamLocalBindUnlink,
@@ -772,6 +774,7 @@ static struct {
 	{ "exposeauthinfo", sExposeAuthInfo, SSHCFG_ALL },
 	{ "rdomain", sRDomain, SSHCFG_ALL },
 	{ "casignaturealgorithms", sCASignatureAlgorithms, SSHCFG_ALL },
+	{ "pubkeyplugin", sPubKeyPlugin, SSHCFG_ALL },
 	{ "securitykeyprovider", sSecurityKeyProvider, SSHCFG_GLOBAL },
 	{ "requiredrsasize", sRequiredRSASize, SSHCFG_ALL },
 	{ "channeltimeout", sChannelTimeout, SSHCFG_ALL },
@@ -2731,6 +2734,18 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 	case sSshdSessionPath:
 		charptr = &options->sshd_session_path;
 		goto parse_filename;
+
+	case sPubKeyPlugin:
+		/*
+		 * Can't use parse_filename, as we need to support plain
+		 * names which dlopen will find on our lib path.
+		 */
+		arg = strdelim(&str);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing file name.",
+			    filename, linenum);
+		options->pubkey_plugin = xstrdup(arg);
+		break;
 
 	case sDeprecated:
 	case sIgnore:
