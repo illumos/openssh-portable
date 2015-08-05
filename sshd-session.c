@@ -301,6 +301,32 @@ privsep_preauth_child(void)
 
 	/* Demote the child */
 	if (privsep_chroot) {
+		struct stat st;
+		int rc;
+
+		/* If not there, try and mkdir our chroot... */
+		if ((stat(_PATH_PRIVSEP_CHROOT_DIR, &st) == -1) ||
+		    (S_ISDIR(st.st_mode) == 0)) {
+			rc = mkdir(_PATH_PRIVSEP_CHROOT_DIR, 0755);
+			if (rc == 0) {
+				/*
+				 * If mkdir works, try stat again, so the
+				 * permissions check below can work.
+				 */
+				rc = stat(_PATH_PRIVSEP_CHROOT_DIR, &st);
+				if (rc == 0 && S_ISDIR(st.st_mode) == 0) {
+					rc = -1;
+					errno = ENOTDIR;
+				}
+			}
+
+			if (rc != 0) {
+				fatal("Failed to create privilege separation "
+				    "directory %s: %s",
+				    _PATH_PRIVSEP_CHROOT_DIR,
+				    strerror(errno));
+			}
+		}
 		/* Change our root directory */
 		if (chroot(_PATH_PRIVSEP_CHROOT_DIR) == -1)
 			fatal("chroot(\"%s\"): %s", _PATH_PRIVSEP_CHROOT_DIR,
