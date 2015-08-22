@@ -4743,19 +4743,17 @@ AC_ARG_WITH([kerberos5],
 		AC_DEFINE([KRB5], [1], [Define if you want Kerberos 5 support])
 		KRB5_MSG="yes"
 
-		use_pkgconfig_for_krb5=
-		if test "x$PKGCONFIG" != "xno"; then
-			AC_MSG_CHECKING([if $PKGCONFIG knows about kerberos5])
-			if "$PKGCONFIG" krb5; then
-				AC_MSG_RESULT([yes])
-				use_pkgconfig_for_krb5=yes
-			else
-				AC_MSG_RESULT([no])
-			fi
+		AC_PATH_TOOL([KRB5CONF], [krb5-config],
+			     [$KRB5ROOT/bin/krb5-config],
+			     [$KRB5ROOT/bin:$PATH])
+		# Illumos has GSS but krb5-config doesn't talk about it
+		# Fall back to regular probing for libs
+		if uname -rs | grep 'SunOS 5.11' ; then
+			KRB5CONF=nonexistent
 		fi
-		if test "x$use_pkgconfig_for_krb5" = "xyes"; then
-			K5CFLAGS=`$PKGCONFIG --cflags krb5`
-			K5LIBS=`$PKGCONFIG --libs krb5`
+		if test -x $KRB5CONF ; then
+			K5CFLAGS="`$KRB5CONF --cflags`"
+			K5LIBS="`$KRB5CONF --libs`"
 			CPPFLAGS="$CPPFLAGS $K5CFLAGS"
 
 			AC_MSG_CHECKING([for gssapi support])
@@ -4804,29 +4802,17 @@ AC_ARG_WITH([kerberos5],
 				AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ #include <krb5.h>
 					]], [[ char *tmp = heimdal_version; ]])],
 					[ AC_MSG_RESULT([yes])
-					AC_DEFINE([HEIMDAL], [1],
-					[Define this if you are using the Heimdal
-					version of Kerberos V5]) ],
-					[AC_MSG_RESULT([no])
-				])
-			else
-				CPPFLAGS="$CPPFLAGS -I${KRB5ROOT}/include"
-				LDFLAGS="$LDFLAGS -L${KRB5ROOT}/lib"
-				AC_MSG_CHECKING([whether we are using Heimdal])
-				AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ #include <krb5.h>
-					]], [[ char *tmp = heimdal_version; ]])],
-						[ AC_MSG_RESULT([yes])
-						 AC_DEFINE([HEIMDAL])
-						 K5LIBS="-lkrb5"
-						 K5LIBS="$K5LIBS -lcom_err -lasn1"
-						 AC_CHECK_LIB([roken], [net_write],
-						   [K5LIBS="$K5LIBS -lroken"])
-						 AC_CHECK_LIB([des], [des_cbc_encrypt],
-						   [K5LIBS="$K5LIBS -ldes"])
-					       ], [ AC_MSG_RESULT([no])
-						 K5LIBS="-lkrb5 -lk5crypto -lcom_err"
-				])
-				AC_SEARCH_LIBS([dn_expand], [resolv])
+					 AC_DEFINE([HEIMDAL])
+					 K5LIBS="-lkrb5"
+					 K5LIBS="$K5LIBS -lcom_err -lasn1"
+					 AC_CHECK_LIB([roken], [net_write],
+					   [K5LIBS="$K5LIBS -lroken"])
+					 AC_CHECK_LIB([des], [des_cbc_encrypt],
+					   [K5LIBS="$K5LIBS -ldes"])
+				       ], [ AC_MSG_RESULT([no])
+					 K5LIBS="-lkrb5"
+			])
+			AC_SEARCH_LIBS([dn_expand], [resolv])
 
 				AC_CHECK_LIB([gssapi_krb5], [gss_init_sec_context],
 					[ AC_DEFINE([GSSAPI])
