@@ -36,6 +36,7 @@
 #include "compat.h"
 #include "log.h"
 #include "match.h"
+#include "sshbuf.h"
 
 /* determine bug flags from SSH protocol banner */
 void
@@ -51,8 +52,12 @@ compat_banner(struct ssh *ssh, const char *version)
 		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF|SSH_OLD_FORWARD_ADDR|
 					SSH_BUG_SIGTYPE},
 		{ "OpenSSH_3.*",	SSH_OLD_FORWARD_ADDR|SSH_BUG_SIGTYPE },
-		{ "Sun_SSH_1.0*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
-					SSH_BUG_SIGTYPE},
+		{ "Sun_SSH_1.2*,"
+		  "Sun_SSH_1.3*,"
+		  "Sun_SSH_1.4*,"
+		  "Sun_SSH_1.5*",	SSH_OLD_DHGEX},
+		{ "Sun_SSH_1.*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
+					SSH_BUG_SIGTYPE|SSH_OLD_DHGEX},
 		{ "OpenSSH_2*,"
 		  "OpenSSH_3*,"
 		  "OpenSSH_4*",		SSH_BUG_SIGTYPE },
@@ -137,6 +142,31 @@ compat_banner(struct ssh *ssh, const char *version)
 	debug_f("no match: %s", version);
 }
 
+/*
+ * Adds an algorithm to the end of a proposal list, only if the algorithm is
+ * not already present.
+ */
+static char *
+append_proposal(char *proposal, const char *append)
+{
+	struct sshbuf *b;
+	char *fix_prop;
+
+	if (strstr(proposal, append) != NULL)
+		return proposal;
+	if ((b = sshbuf_new()) == NULL)
+		fatal("sshbuf_new()");
+	sshbuf_put(b, proposal, strlen(proposal));
+	if (sshbuf_len(b) > 0)
+		sshbuf_put(b, ",", 1);
+	sshbuf_put(b, append, strlen(append));
+	sshbuf_put(b, "\0", 1);
+	fix_prop = sshbuf_dup_string(b);
+	sshbuf_free(b);
+
+	return fix_prop;
+}
+
 /* Always returns pointer to allocated memory, caller must free. */
 char *
 compat_kex_proposal(struct ssh *ssh, const char *p)
@@ -155,6 +185,8 @@ compat_kex_proposal(struct ssh *ssh, const char *p)
 		    "diffie-hellman-group-exchange-sha256,"
 		    "diffie-hellman-group-exchange-sha1")) == NULL)
 			fatal("match_filter_denylist failed");
+		cp2 = append_proposal(cp2, "diffie-hellman-group14-sha1");
+		cp2 = append_proposal(cp2, "diffie-hellman-group1-sha1");
 		free(cp);
 		cp = cp2;
 	}
