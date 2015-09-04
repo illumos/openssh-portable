@@ -200,6 +200,7 @@ initialize_server_options(ServerOptions *options)
 	options->client_alive_count_max = -1;
 	options->num_authkeys_files = 0;
 	options->num_accept_env = 0;
+	options->default_accept_env = 1;
 	options->num_setenv = 0;
 	options->permit_tun = -1;
 	options->permitted_opens = NULL;
@@ -532,6 +533,32 @@ fill_default_server_options(ServerOptions *options)
 		options->max_sessions = DEFAULT_SESSIONS_MAX;
 	if (options->use_dns == -1)
 		options->use_dns = 0;
+	if (options->default_accept_env == 1) {
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LANG");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_ALL");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_CTYPE");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_COLLATE");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_TIME");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_NUMERIC");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_MONETARY");
+		opt_array_append("[default]", 0, "AcceptEnv",
+		    &options->accept_env, &options->num_accept_env,
+		    "LC_MESSAGES");
+	}
 	if (options->client_alive_interval == -1)
 		options->client_alive_interval = 0;
 	if (options->client_alive_count_max == -1)
@@ -2305,8 +2332,11 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			if (*arg == '\0' || strchr(arg, '=') != NULL)
 				fatal("%s line %d: Invalid environment name.",
 				    filename, linenum);
+			options->default_accept_env = 0;
 			found = 1;
 			if (!*activep)
+				continue;
+			if (strcmp(arg, "none") == 0)
 				continue;
 			opt_array_append(filename, linenum, keyword,
 			    &options->accept_env, &options->num_accept_env,
