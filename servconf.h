@@ -178,6 +178,7 @@ typedef struct {
 	char   **subsystem_args;
 
 	u_int num_accept_env;
+	int    default_accept_env;
 	char   **accept_env;
 	u_int num_setenv;
 	char   **setenv;
