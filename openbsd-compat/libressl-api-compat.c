@@ -25,7 +25,7 @@
 
 #include <openssl/evp.h>
 
-#ifndef HAVE_EVP_CIPHER_CTX_GET_IV
+#ifndef HAVE_SUNW_EVP_CIPHER_CTX_GET_IV
 int
 EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 {
@@ -44,17 +44,17 @@ EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 	if (len != 0) {
 		if (iv == NULL)
 			return 0;
-# ifdef HAVE_EVP_CIPHER_CTX_IV
+# ifdef HAVE_SUNW_EVP_CIPHER_CTX_IV
 		memcpy(iv, EVP_CIPHER_CTX_iv(ctx), len);
 # else
 		memcpy(iv, ctx->iv, len);
-# endif /* HAVE_EVP_CIPHER_CTX_IV */
+# endif /* HAVE_SUNW_EVP_CIPHER_CTX_IV */
 	}
 	return 1;
 }
-#endif /* HAVE_EVP_CIPHER_CTX_GET_IV */
+#endif /* HAVE_SUNW_EVP_CIPHER_CTX_GET_IV */
 
-#ifndef HAVE_EVP_CIPHER_CTX_SET_IV
+#ifndef HAVE_SUNW_EVP_CIPHER_CTX_SET_IV
 int
 EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
 {
@@ -73,14 +73,14 @@ EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
 	if (len != 0) {
 		if (iv == NULL)
 			return 0;
-# ifdef HAVE_EVP_CIPHER_CTX_IV_NOCONST
+# ifdef HAVE_SUNW_EVP_CIPHER_CTX_IV_NOCONST
 		memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), iv, len);
 # else
 		memcpy(ctx->iv, iv, len);
-# endif /* HAVE_EVP_CIPHER_CTX_IV_NOCONST */
+# endif /* HAVE_SUNW_EVP_CIPHER_CTX_IV_NOCONST */
 	}
 	return 1;
 }
-#endif /* HAVE_EVP_CIPHER_CTX_SET_IV */
+#endif /* HAVE_SUNW_EVP_CIPHER_CTX_SET_IV */
 
 #endif /* WITH_OPENSSL */

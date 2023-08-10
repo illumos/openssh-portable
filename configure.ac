@@ -2847,9 +2847,9 @@ AC_ARG_WITH([ssl-engine],
 
 nocrypto_saved_LIBS="$LIBS"
 if test "x$openssl" = "xyes" ; then
-	LIBS="-lcrypto $LIBS"
-	CHANNELLIBS="-lcrypto $CHANNELLIBS"
-	AC_TRY_LINK_FUNC([RAND_add], ,
+	LIBS="-L /usr/lib:${DESTDIR}/usr/lib -lsunw_crypto $LIBS"
+	CHANNELLIBS="-L /usr/lib:${DESTDIR}/usr/lib -lsunw_crypto $CHANNELLIBS"
+	AC_TRY_LINK_FUNC([sunw_RAND_add], ,
 	    [AC_MSG_ERROR([*** working libcrypto not found, check config.log])])
 	AC_CHECK_HEADER([openssl/opensslv.h], ,
 	    [AC_MSG_ERROR([*** OpenSSL headers missing - please install first or check config.log ***])])
@@ -3037,23 +3037,23 @@ if test "x$openssl" = "xyes" ; then
 	)
 
 	AC_CHECK_FUNCS([ \
-		BN_is_prime_ex \
-		DES_crypt \
-		DSA_generate_parameters_ex \
-		EVP_DigestFinal_ex \
-		EVP_DigestInit_ex \
-		EVP_MD_CTX_cleanup \
-		EVP_MD_CTX_copy_ex \
-		EVP_MD_CTX_init \
-		HMAC_CTX_init \
-		RSA_generate_key_ex \
-		RSA_get_default_method \
+		sunw_BN_is_prime_ex \
+		sunw_DES_crypt \
+		sunw_DSA_generate_parameters_ex \
+		sunw_EVP_DigestFinal_ex \
+		sunw_EVP_DigestInit_ex \
+		sunw_EVP_MD_CTX_cleanup \
+		sunw_EVP_MD_CTX_copy_ex \
+		sunw_EVP_MD_CTX_init \
+		sunw_HMAC_CTX_init \
+		sunw_RSA_generate_key_ex \
+		sunw_RSA_get_default_method \
 	])
 
 	# OpenSSL_add_all_algorithms may be a macro.
-	AC_CHECK_FUNC(OpenSSL_add_all_algorithms,
+	AC_CHECK_FUNC(sunw_OpenSSL_add_all_algorithms,
 	    AC_DEFINE(HAVE_OPENSSL_ADD_ALL_ALGORITHMS, 1, [as a function]),
-	    AC_CHECK_DECL(OpenSSL_add_all_algorithms,
+	    AC_CHECK_DECL(sunw_OpenSSL_add_all_algorithms,
 		AC_DEFINE(HAVE_OPENSSL_ADD_ALL_ALGORITHMS, 1, [as a macro]), ,
 		[[#include <openssl/evp.h>]]
 	    )
@@ -3061,11 +3061,11 @@ if test "x$openssl" = "xyes" ; then
 
 	# LibreSSL/OpenSSL API differences
 	AC_CHECK_FUNCS([ \
-		EVP_CIPHER_CTX_iv \
-		EVP_CIPHER_CTX_iv_noconst \
-		EVP_CIPHER_CTX_get_iv \
-		EVP_CIPHER_CTX_get_updated_iv \
-		EVP_CIPHER_CTX_set_iv \
+		sunw_EVP_CIPHER_CTX_iv \
+		sunw_EVP_CIPHER_CTX_iv_noconst \
+		sunw_EVP_CIPHER_CTX_get_iv \
+		sunw_EVP_CIPHER_CTX_get_updated_iv \
+		sunw_EVP_CIPHER_CTX_set_iv \
 	])
 
 	if test "x$openssl_engine" = "xyes" ; then
@@ -3124,7 +3124,7 @@ if test "x$openssl" = "xyes" ; then
 	)
 
 	# Check for various EVP support in OpenSSL
-	AC_CHECK_FUNCS([EVP_sha256 EVP_sha384 EVP_sha512 EVP_chacha20])
+	AC_CHECK_FUNCS([sunw_EVP_sha256 sunw_EVP_sha384 sunw_EVP_sha512 sunw_EVP_chacha20])
 
 	# Check complete ECC support in OpenSSL
 	AC_MSG_CHECKING([whether OpenSSL has NID_X9_62_prime256v1])
@@ -3204,7 +3204,7 @@ if test "x$openssl" = "xyes" ; then
 	if test x$enable_nistp256 = x1 || test x$enable_nistp384 = x1 || \
 	    test x$enable_nistp521 = x1; then
 		AC_DEFINE(OPENSSL_HAS_ECC, [1], [OpenSSL has ECC])
-		AC_CHECK_FUNCS([EC_KEY_METHOD_new])
+		AC_CHECK_FUNCS([sunw_EC_KEY_METHOD_new])
 		openssl_ecc=yes
 	else
 		openssl_ecc=no

@@ -64,19 +64,19 @@ void ssh_libcrypto_init(void);
 # define BN_set_flags(a, b)
 #endif
 
-#ifndef HAVE_EVP_CIPHER_CTX_GET_IV
-# ifdef HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV
+#ifndef HAVE_SUNW_EVP_CIPHER_CTX_GET_IV
+# ifdef HAVE_SUNW_EVP_CIPHER_CTX_GET_UPDATED_IV
 #  define EVP_CIPHER_CTX_get_iv EVP_CIPHER_CTX_get_updated_iv
-# else /* HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV */
+# else /* HAVE_SUNW_EVP_CIPHER_CTX_GET_UPDATED_IV */
 int EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx,
     unsigned char *iv, size_t len);
-# endif /* HAVE_EVP_CIPHER_CTX_GET_UPDATED_IV */
-#endif /* HAVE_EVP_CIPHER_CTX_GET_IV */
+# endif /* HAVE_SUNW_EVP_CIPHER_CTX_GET_UPDATED_IV */
+#endif /* HAVE_SUNW_EVP_CIPHER_CTX_GET_IV */
 
-#ifndef HAVE_EVP_CIPHER_CTX_SET_IV
+#ifndef HAVE_SUNW_EVP_CIPHER_CTX_SET_IV
 int EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx,
     const unsigned char *iv, size_t len);
-#endif /* HAVE_EVP_CIPHER_CTX_SET_IV */
+#endif /* HAVE_SUNW_EVP_CIPHER_CTX_SET_IV */
 
 #endif /* WITH_OPENSSL */
 #endif /* _OPENSSL_COMPAT_H */

@@ -48,7 +48,7 @@
 
 #include "openbsd-compat/openssl-compat.h"
 
-#if !defined(OPENSSL_HAS_ECC) || !defined(HAVE_EC_KEY_METHOD_NEW)
+#if !defined(OPENSSL_HAS_ECC) || !defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 #define EC_KEY_METHOD void
 #define EC_KEY void
 #endif
@@ -103,7 +103,7 @@ helper_by_rsa(const RSA *rsa)
 
 }
 
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 static struct helper *
 helper_by_ec(const EC_KEY *ec)
 {
@@ -119,7 +119,7 @@ helper_by_ec(const EC_KEY *ec)
 	return NULL;
 
 }
-#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW) */
+#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW) */
 
 static void
 helper_free(struct helper *helper)
@@ -148,7 +148,7 @@ helper_free(struct helper *helper)
 		nhelpers--;
 	}
 	free(helper->path);
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 	EC_KEY_METHOD_free(helper->ec_meth);
 #endif
 	RSA_meth_free(helper->rsa_meth);
@@ -322,7 +322,7 @@ rsa_finish(RSA *rsa)
 	return 1;
 }
 
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 static ECDSA_SIG *
 ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
     const BIGNUM *rp, EC_KEY *ec)
@@ -402,7 +402,7 @@ ecdsa_do_finish(EC_KEY *ec)
 	if (helper->nrsa == 0 && helper->nec == 0)
 		helper_terminate(helper);
 }
-#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW) */
+#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW) */
 
 /* redirect private key crypto operations to the ssh-pkcs11-helper */
 static void
@@ -413,7 +413,7 @@ wrap_key(struct helper *helper, struct sshkey *k)
 		RSA_set_method(k->rsa, helper->rsa_meth);
 		if (helper->nrsa++ >= INT_MAX)
 			fatal_f("RSA refcount error");
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 	} else if (k->type == KEY_ECDSA) {
 		EC_KEY_set_method(k->ecdsa, helper->ec_meth);
 		if (helper->nec++ >= INT_MAX)
@@ -487,7 +487,7 @@ pkcs11_start_helper_methods(struct helper *helper)
 {
 	RSA_METHOD *rsa_meth;
 	EC_KEY_METHOD *ec_meth = NULL;
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 	int (*ec_init)(EC_KEY *key);
 	int (*ec_copy)(EC_KEY *dest, const EC_KEY *src);
 	int (*ec_set_group)(EC_KEY *key, const EC_GROUP *grp);
@@ -504,7 +504,7 @@ pkcs11_start_helper_methods(struct helper *helper)
 	    &ec_copy, &ec_set_group, &ec_set_private, &ec_set_public);
 	EC_KEY_METHOD_set_init(ec_meth, ec_init, ecdsa_do_finish,
 	    ec_copy, ec_set_group, ec_set_private, ec_set_public);
-#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW) */
+#endif /* defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW) */
 
 	if ((rsa_meth = RSA_meth_dup(RSA_get_default_method())) == NULL)
 		fatal_f("RSA_meth_dup failed");
@@ -545,7 +545,7 @@ pkcs11_start_helper(const char *path)
 		close(pair[0]);
 		close(pair[1]);
 		RSA_meth_free(helper->rsa_meth);
-#if defined(OPENSSL_HAS_ECC) && defined(HAVE_EC_KEY_METHOD_NEW)
+#if defined(OPENSSL_HAS_ECC) && defined(HAVE_SUNW_EC_KEY_METHOD_NEW)
 		EC_KEY_METHOD_free(helper->ec_meth);
 #endif
 		free(helper);
