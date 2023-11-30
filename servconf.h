@@ -250,6 +250,7 @@ typedef struct {
 	u_int64_t timing_secret;
 	char   *sk_provider;
 	int	required_rsa_size;	/* minimum size of RSA keys */
+	char   *pubkey_plugin;
 
 	char	**channel_timeouts;	/* inactivity timeout by channel type */
 	u_int	num_channel_timeouts;

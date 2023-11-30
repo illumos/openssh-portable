@@ -225,6 +225,7 @@ initialize_server_options(ServerOptions *options)
 	 */
 	options->pam_service_per_authmethod = 1;
 #endif
+	options->pubkey_plugin = NULL;
 }
 
 /* Returns 1 if a string option is unset or set to "none" or 0 otherwise. */
@@ -607,7 +608,7 @@ typedef enum {
 	sExposeAuthInfo, sRDomain, sPubkeyAuthOptions, sSecurityKeyProvider,
 	sRequiredRSASize, sChannelTimeout, sUnusedConnectionTimeout,
 	sSshdSessionPath,
-	sDeprecated, sIgnore, sUnsupported
+	sPubKeyPlugin, sDeprecated, sIgnore, sUnsupported
 } ServerOpCodes;
 
 #define SSHCFG_GLOBAL		0x01	/* allowed in main section of config */
@@ -811,6 +812,7 @@ static struct {
 	{ "channeltimeout", sChannelTimeout, SSHCFG_ALL },
 	{ "unusedconnectiontimeout", sUnusedConnectionTimeout, SSHCFG_ALL },
 	{ "sshdsessionpath", sSshdSessionPath, SSHCFG_GLOBAL },
+	{ "pubkeyplugin", sPubKeyPlugin, SSHCFG_ALL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -2758,6 +2760,18 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			    " are mutually exclusive.", filename, linenum);
 		if (options->pam_service_prefix == NULL)
 			options->pam_service_prefix = xstrdup(arg);
+		break;
+
+	case sPubKeyPlugin:
+		/*
+		 * Can't use parse_filename, as we need to support plain
+		 * names which dlopen will find on our lib path.
+		 */
+		arg = argv_next(&ac, &av);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing file name.",
+			    filename, linenum);
+		options->pubkey_plugin = xstrdup(arg);
 		break;
 
 	case sDeprecated:

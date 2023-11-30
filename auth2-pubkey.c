@@ -23,6 +23,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2015 Joyent, Inc.
+ * Copyright 2023 MNX Cloud, Inc.
+ * Use is subject to license terms.
+ */
 
 #include "includes.h"
 
@@ -41,6 +47,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
+#include <dlfcn.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -73,6 +80,10 @@
 /* import */
 extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_pubkey;
+
+static const char *UNIV_SYM_NAME = "sshd_user_key_allowed";
+typedef int (*UNIV_SYM)(struct passwd *, const char *,
+    const u_char *, size_t);
 
 static char *
 format_key(const struct sshkey *key)
@@ -746,6 +757,76 @@ user_key_command_allowed2(struct passwd *user_pw, struct sshkey *key,
 	return found_key;
 }
 
+/**
+ * Checks whether or not access is allowed based on a plugin specified
+ * in sshd_config (PubKeyPlugin).
+ *
+ * Note that this expects a symbol in the loaded library that takes
+ * the current user (pwd entry), the current key and it's fingerprint.
+ * The symbol is expected to return 1 on success and 0 on failure.
+ *
+ * While we could optimize this code to dlopen once in the process' lifetime,
+ * sshd is already a slow beast, so this is really not a concern.
+ * The overhead is basically a rounding error compared to everything else, and
+ * it keeps this code minimally invasive.
+ */
+static int
+user_key_allowed_from_plugin(struct passwd *pw, struct sshkey *key,
+    struct sshauthopt **authoptsp)
+{
+	UNIV_SYM univ_sym = NULL;
+	void *handle = NULL;
+	int success = 0;
+
+	if (options.pubkey_plugin == NULL || pw == NULL || key == NULL ||
+	    (key->type != KEY_RSA && key->type != KEY_DSA &&
+	    key->type != KEY_ECDSA && key->type != KEY_ED25519))
+		return success;
+
+	handle = dlopen(options.pubkey_plugin, RTLD_NOW);
+	if (handle == NULL) {
+		debug("Unable to open library %s: %s", options.pubkey_plugin,
+		dlerror());
+		goto out;
+	}
+
+	/*
+	 * Check that the universal symbol for checking keys is present in
+	 * the libsmartsshd plugin.
+	 */
+	univ_sym = (UNIV_SYM)dlsym(handle, UNIV_SYM_NAME);
+	if (univ_sym != NULL) {
+		u_char *blob;
+		const char *type = sshkey_type(key);
+		size_t len = 0;
+		if (sshkey_to_blob(key, &blob, &len) != 0) {
+			debug("failed to convert key to rfc4253 format");
+			goto out;
+		}
+		debug("Invoking %s from %s", UNIV_SYM_NAME,
+		    options.pubkey_plugin);
+		success = (*univ_sym)(pw, type, blob, len);
+		debug("pubkeyplugin returned: %d", success);
+		goto out;
+	} else {
+		debug("pubkeyplugin missing %s symbol", UNIV_SYM_NAME);
+	}
+
+out:
+	if (handle != NULL) {
+		dlclose(handle);
+		univ_sym = NULL;
+		handle = NULL;
+	}
+
+	if (success) {
+		verbose("Found matching %s key", sshkey_type(key));
+		*authoptsp = sshauthopt_new_with_keys_defaults();
+	}
+
+	return success;
+}
+
 /*
  * Check whether key authenticates and authorises the user.
  */
@@ -793,6 +874,11 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 
 	if ((success = user_cert_trusted_ca(pw, key, remote_ip, remote_host,
 	    conn_id, rdomain, &opts)) != 0)
+		goto out;
+	sshauthopt_free(opts);
+	opts = NULL;
+
+	if ((success = user_key_allowed_from_plugin(pw, key, &opts)) != 0)
 		goto out;
 	sshauthopt_free(opts);
 	opts = NULL;
