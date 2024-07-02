@@ -1553,10 +1553,10 @@ cleanup_exit(int i)
 		do_cleanup(the_active_state, the_authctxt);
 		if (privsep_is_preauth &&
 		    pmonitor != NULL && pmonitor->m_pid > 1) {
-			debug("Killing privsep child %d", pmonitor->m_pid);
+			debug("Killing privsep child %l", pmonitor->m_pid);
 			if (kill(pmonitor->m_pid, SIGKILL) != 0 &&
 			    errno != ESRCH) {
-				error_f("kill(%d): %s", pmonitor->m_pid,
+				error_f("kill(%l): %s", pmonitor->m_pid,
 				    strerror(errno));
 			}
 		}
