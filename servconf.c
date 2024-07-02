@@ -93,6 +93,17 @@ initialize_server_options(ServerOptions *options)
 	/* Portable-specific options */
 	options->use_pam = -1;
 	options->pam_service_name = NULL;
+#ifdef PAM_ENHANCEMENT
+	options->pam_service_prefix = NULL;
+
+	/*
+	 * Each user method will have its own PAM service by default.
+	 * However, if PAMServiceName is specified
+	 * then there will be only one PAM service for the
+	 * entire user authentication.
+	 */
+	options->pam_service_per_authmethod = 1;
+#endif
 
 	/* Standard Options */
 	options->num_ports = 0;
@@ -301,8 +312,13 @@ fill_default_server_options(ServerOptions *options)
 #else
 		options->use_pam = 0;
 #endif
+#ifdef PAM_ENHANCEMENT
+	if (options->pam_service_prefix == NULL)
+		options->pam_service_prefix = xstrdup(SSHD_PAM_SERVICE);
+#else
 	if (options->pam_service_name == NULL)
 		options->pam_service_name = xstrdup(SSHD_PAM_SERVICE);
+#endif
 
 	/* Standard Options */
 	if (options->num_host_key_files == 0) {
@@ -543,6 +559,9 @@ typedef enum {
 	sBadOption,		/* == unknown option */
 	/* Portable-specific options */
 	sUsePAM, sPAMServiceName,
+#ifdef PAM_ENHANCEMENT
+	sPAMServicePrefix,
+#endif
 	/* Standard Options */
 	sPort, sHostKeyFile, sLoginGraceTime,
 	sPermitRootLogin, sLogFacility, sLogLevel, sLogVerbose,
@@ -595,10 +614,20 @@ static struct {
 	/* Portable-specific options */
 #ifdef USE_PAM
 	{ "usepam", sUsePAM, SSHCFG_GLOBAL },
+#ifdef PAM_ENHANCEMENT
+	{ "pamserviceprefix", sPAMServicePrefix, SSHCFG_GLOBAL },
+	{ "pamservicename", sPAMServiceName, SSHCFG_GLOBAL },
+#else
 	{ "pamservicename", sPAMServiceName, SSHCFG_ALL },
+#endif /* PAM_ENHANCEMENT */
 #else
 	{ "usepam", sUnsupported, SSHCFG_GLOBAL },
+#ifdef PAM_ENHANCEMENT
+	{ "pamserviceprefix", sUnsupported, SSHCFG_GLOBAL },
+	{ "pamservicename", sUnsupported, SSHCFG_GLOBAL },
+#else
 	{ "pamservicename", sUnsupported, SSHCFG_ALL },
+#endif /* PAM_ENHANCEMENT */
 #endif
 	{ "pamauthenticationviakbdint", sDeprecated, SSHCFG_GLOBAL },
 	/* Standard Options */
@@ -1345,6 +1374,21 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		intptr = &options->use_pam;
 		goto parse_flag;
 #endif
+#ifdef PAM_ENHANCEMENT
+	case sPAMServicePrefix:
+		charptr = &options->pam_service_prefix;
+		arg = argv_next(&ac, &av);
+		if (!arg || *arg == '\0') {
+			fatal("%s line %d: missing argument.",
+			    filename, linenum);
+		}
+		if (options->pam_service_name != NULL)
+			fatal("%s line %d: PAMServiceName and PAMServicePrefix"
+			    " are mutually exclusive.", filename, linenum);
+		if (*charptr == NULL)
+			*charptr = xstrdup(arg);
+		break;
+#endif /* PAM_ENHANCEMENT */
 	case sPAMServiceName:
 		charptr = &options->pam_service_name;
 		arg = argv_next(&ac, &av);
@@ -1352,8 +1396,20 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			fatal("%s line %d: missing argument.",
 			    filename, linenum);
 		}
+#ifdef PAM_ENHANCEMENT
+		if (options->pam_service_prefix != NULL)
+			fatal("%s line %d: PAMServiceName and PAMServicePrefix"
+			    " are mutually exclusive.", filename, linenum);
+#endif /* PAM_ENHANCEMENT */
 		if (*activep && *charptr == NULL)
 			*charptr = xstrdup(arg);
+#ifdef PAM_ENHANCEMENT
+		/*
+		 * When this option is specified, we will not have
+		 * PAM service for each auth method.
+		 */
+		options->pam_service_per_authmethod = 0;
+#endif
 		break;
 
 	/* Standard Options */

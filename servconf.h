@@ -211,6 +211,10 @@ typedef struct {
 
 	int	use_pam;		/* Enable auth via PAM */
 	char   *pam_service_name;
+#ifdef PAM_ENHANCEMENT
+	char   *pam_service_prefix;
+	int     pam_service_per_authmethod;
+#endif
 
 	int	permit_tun;
 
