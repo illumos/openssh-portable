@@ -1252,7 +1252,7 @@ main(int ac, char **av)
 	remote_ip = ssh_remote_ipaddr(ssh);
 
 #ifdef SSH_AUDIT_EVENTS
-	audit_connection_from(remote_ip, remote_port);
+	audit_connection_from(ssh, remote_ip, remote_port);
 #endif
 
 	rdomain = ssh_packet_rdomain_in(ssh);
@@ -1334,7 +1334,9 @@ main(int ac, char **av)
 		set_process_rdomain(ssh, options.routing_domain);
 
 #ifdef SSH_AUDIT_EVENTS
+#ifndef USE_SOLARIS_AUDIT
 	audit_event(ssh, SSH_AUTH_SUCCESS);
+#endif
 #endif
 
 #ifdef GSSAPI
