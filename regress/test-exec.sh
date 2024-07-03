@@ -543,7 +543,7 @@ save_debug_log ()
 			logfiles="$logfiles $i"
 		fi
 	  done
-	  tar cf "$tarname" $logfiles)
+	  gtar cf "$tarname" $logfiles)
 }
 
 trace ()

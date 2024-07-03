@@ -73,3 +73,4 @@ EOD
 
 # cleanup
 rm -f $OBJ/sshd_config.[012]
+exit 0
