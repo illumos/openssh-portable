@@ -44,4 +44,9 @@ int sshpam_get_maxtries_reached(void);
 void sshpam_set_maxtries_reached(int);
 int is_pam_session_open(void);
 
+#ifdef HAVE_PAM_AUSER
+void do_pam_set_auser(const char *);
+#endif
+void do_pam_set_tty(const char *);
+
 #endif /* USE_PAM */
