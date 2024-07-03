@@ -186,6 +186,9 @@ typedef struct {
 	u_int	num_channel_timeouts;
 
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
+#ifdef DISABLE_BANNER
+        int     disable_banner; /* Disable display of banner */
+#endif
 }       Options;
 
 #define SSH_PUBKEY_AUTH_NO	0x00
@@ -230,6 +233,12 @@ typedef struct {
 #define SSH_KEYSTROKE_DEFAULT_INTERVAL_MS	20
 #define SSH_KEYSTROKE_CHAFF_MIN_MS		1024
 #define SSH_KEYSTROKE_CHAFF_RNG_MS		2048
+
+#ifdef DISABLE_BANNER
+#define SSH_DISABLEBANNER_NO		0
+#define SSH_DISABLEBANNER_YES		1
+#define SSH_DISABLEBANNER_INEXECMODE	2
+#endif
 
 const char *kex_default_pk_alg(void);
 char	*ssh_connection_hash(const char *thishost, const char *host,
