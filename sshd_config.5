@@ -1308,6 +1308,7 @@ Available keywords are
 .Cm MaxAuthTries ,
 .Cm MaxSessions ,
 .Cm PAMServiceName ,
+.Cm PAMServicePrefix ,
 .Cm PasswordAuthentication ,
 .Cm PermitEmptyPasswords ,
 .Cm PermitListen ,
@@ -1375,12 +1376,34 @@ key exchange methods.
 The default is
 .Pa /etc/moduli .
 .It Cm PAMServiceName
-Specifies the service name used for Pluggable Authentication Modules (PAM)
-authentication, authorisation and session controls when
-.Cm UsePAM
-is enabled.
-The default is
-.Cm sshd .
+Specifies the PAM service name for the PAM session.
+The
+.Cm PAMServiceName
+and
+.Cm PAMServicePrefix
+options are mutually exclusive and if both are set, sshd does not start.
+If this option is set the service name is the same for all user authentication
+methods.
+The option has no default value.
+See
+.Cm PAMServicePrefix
+for more information.
+.It Cm PAMServicePrefix
+Specifies the PAM service name prefix for service names used for individual
+user authentication methods.
+The default is sshd.
+The
+.Cm PAMServiceName
+and
+.Cm PAMServicePrefix
+options are mutually exclusive and if both are set, sshd does not start.
+.Pp
+For example, if this option is set to
+.Cm admincli ,
+the service name for the keyboard-interactive authentication method is
+.Sy admincli-kbdint
+instead of the default
+.Sy sshd-kbdint .
 .It Cm PasswordAuthentication
 Specifies whether password authentication is allowed.
 The default is
@@ -2011,8 +2034,7 @@ If
 is enabled, you will not be able to run
 .Xr sshd 8
 as a non-root user.
-The default is
-.Cm no .
+On OmniOS, the option is always enabled.
 .It Cm VersionAddendum
 Optionally specifies additional text to append to the SSH protocol banner
 sent by the server upon connection.

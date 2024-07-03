@@ -452,6 +452,24 @@ mm_inform_authserv(char *service, char *style)
 	sshbuf_free(m);
 }
 
+#ifdef PAM_ENHANCEMENT
+/* Inform the privileged process about the authentication method */
+void
+mm_inform_authmethod(char *authmethod)
+{
+	struct sshbuf *m;
+
+	debug3("%s entering", __func__);
+	if ((m = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new", __func__);
+	sshbuf_put_cstring(m, authmethod);
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUTHMETHOD, m);
+
+	sshbuf_free(m);
+}
+#endif /* PAM_ENHANCEMENT */
+
 /* Do the password authentication */
 int
 mm_auth_password(struct ssh *ssh, char *password)
